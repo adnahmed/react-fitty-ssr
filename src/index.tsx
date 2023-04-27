@@ -1,5 +1,5 @@
-import React from 'react';
 import fitty from 'fitty';
+import React from 'react';
 
 const fullWidth = { width: '100%' };
 
@@ -16,47 +16,46 @@ export const ReactFitty = React.forwardRef<
     { children, minSize = 12, maxSize = 512, wrapText = false, ...rest },
     ref: React.MutableRefObject<any> | ((instance: any) => void) | null
 ) {
-        
-     /* SSR */
-  const [showChild, setShowChild] = useState(false);
+    /* SSR */
+    const [showChild, setShowChild] = useState(false);
 
-  const internalRef = React.useRef<HTMLElement>(null);  
-  /**
-  * Need to use the correct ref because the component ref can contain a className that dynamically
-  * change the text size
-  */
-  const correctRef = ref || internalRef;
-  // Wait until after client-side hydration to show
-  React.useLayoutEffect(() => {
-    setShowChild(true);
-    const effectRef = (ref as React.MutableRefObject<HTMLDivElement>) || internalRef;
-    
-    const fitInstance = fitty(effectRef.current, {
-      minSize: minSize,
-      maxSize: maxSize,
-      multiLine: wrapText,
-      observeMutations: {
-        subtree: true,
-        childList: true,
-        characterData: true,
-        attributeFilter: ["class"],
-      },
-    }); // wait browser finish text width calc with relative properties like rem and %
-    // then, fit text in the next animation frame
-    // maybe that needed to be handled in fitty?
+    const internalRef = React.useRef<HTMLElement>(null);
+    /**
+     * Need to use the correct ref because the component ref can contain a className that dynamically
+     * change the text size
+     */
+    const correctRef = ref || internalRef;
+    // Wait until after client-side hydration to show
+    React.useEffect(() => {
+        setShowChild(true);
+        const effectRef = (ref as React.MutableRefObject<HTMLDivElement>) || internalRef;
 
-    setTimeout(() => {
-      fitInstance.fit();
-    }, 0);
-    return () => {
-      fitty(effectRef.current).unsubscribe();
-    };
-  }, [maxSize, minSize, ref, wrapText]);
+        const fitInstance = fitty(effectRef.current, {
+            minSize: minSize,
+            maxSize: maxSize,
+            multiLine: wrapText,
+            observeMutations: {
+                subtree: true,
+                childList: true,
+                characterData: true,
+                attributeFilter: ['class'],
+            },
+        }); // wait browser finish text width calc with relative properties like rem and %
+        // then, fit text in the next animation frame
+        // maybe that needed to be handled in fitty?
 
-  if (!showChild) {
-    // You can show some kind of placeholder UI here
-    return null;
-  }
+        setTimeout(() => {
+            fitInstance.fit();
+        }, 0);
+        return () => {
+            fitty(effectRef.current).unsubscribe();
+        };
+    }, [maxSize, minSize, ref, wrapText]);
+
+    if (!showChild) {
+        // You can show some kind of placeholder UI here
+        return null;
+    }
 
     // fitty need an extra div to avoid parent padding issue
     // see https://github.com/rikschennink/fitty/issues/20
